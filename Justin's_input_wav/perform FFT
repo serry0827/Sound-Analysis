@@ -1,0 +1,28 @@
+import numpy as np
+import scipy.io.wavfile as wav
+import matplotlib.pyplot as plt
+
+def plot_fft(wav_file_path):
+    # Read the WAV file
+    sample_rate, data = wav.read(wav_file_path)
+
+    # Compute the FFT
+    fft_result = np.fft.fft(data)
+    fft_magnitude = np.abs(fft_result)
+
+    # Frequency values
+    frequencies = np.fft.fftfreq(len(fft_result), d=1/sample_rate)
+
+    print(frequencies)
+    # Plot the FFT profile
+    plt.figure(figsize=(10, 6))
+    plt.plot(frequencies, fft_magnitude)
+    plt.title('FFT Profile')
+    plt.xlabel('Frequency (Hz)')
+    plt.ylabel('Magnitude')
+    plt.grid(True)
+    plt.show()
+
+# Provide the path to your WAV file
+wav_file_path = 'GSP\GSP wav files\함석판1.wav'
+plot_fft(wav_file_path)
