@@ -1,1 +1,85 @@
+import numpy as np
+import scipy.io.wavfile as wav
+import matplotlib.pyplot as plt
+
+def reverse_engineer_waveform(fft_data):
+    # Perform the inverse FFT
+    inverse_fft_result = np.fft.ifft(fft_data).real
+
+    return inverse_fft_result
+
+def plot_waveform_and_reconstructed(original_waveform, reconstructed_waveform, sample_rate):
+    # Plot both the original waveform and the reconstructed waveform in the same plot
+    time_original = np.arange(0, len(original_waveform)) / sample_rate
+    time_reconstructed = np.arange(0, len(reconstructed_waveform)) / sample_rate
+
+    plt.figure(figsize=(15, 6))
+
+    # Plot the original waveform
+    plt.plot(time_original, original_waveform, label='Original Waveform')
+
+    # Plot the reconstructed waveform
+    plt.plot(time_reconstructed, reconstructed_waveform, label='Reconstructed Waveform', linestyle='--')
+
+    plt.title('Original and Reconstructed Waveforms')
+    plt.xlabel('Time (s)')
+    plt.ylabel('Amplitude')
+    plt.legend()
+    plt.grid(True)
+
+    plt.show()
+
+def plot_fft(fft_data, sample_rate):
+    # Plot the FFT profile for positive frequencies up to 2500 Hz
+    frequencies = np.fft.fftfreq(len(fft_data), d=1/sample_rate)
+    mask_positive = (frequencies >= 0) & (frequencies <= 2500)
+    plt.figure(figsize=(10, 6))
+    plt.plot(frequencies[mask_positive], np.abs(fft_data[mask_positive]))
+    plt.title('Original FFT Profile (Positive Frequencies up to 2500 Hz)')
+    plt.xlabel('Frequency (Hz)')
+    plt.ylabel('Magnitude')
+    plt.grid(True)
+    plt.show()
+
+# Example: Read a WAV file and reverse-engineer the waveform
+wav_file_path = 'GSP/GSP wav files/함석판1.wav'
+sample_rate, data = wav.read(wav_file_path)
+
+# Apply Hamming window to the data
+hamming_window = np.hamming(len(data))
+data_windowed = data * hamming_window
+
+# Extract a 37-second segment starting from the beginning
+start_time = 0  # seconds
+segment_duration = 37  # seconds
+start_index = int(start_time * sample_rate)
+end_index = start_index + int(segment_duration * sample_rate)
+data_segment = data_windowed[start_index:end_index]
+
+# Plot the original waveform segment with Hamming window
+plt.figure(figsize=(10, 6))
+time_segment = np.arange(0, len(data_segment)) / sample_rate
+plt.plot(time_segment, data_segment)
+plt.title(f'Original Waveform with Hamming Window (Segment from {start_time} to {start_time + segment_duration} seconds)')
+plt.xlabel('Time (s)')
+plt.ylabel('Amplitude')
+plt.grid(True)
+plt.show()
+
+# Compute the FFT for the selected segment
+fft_result = np.fft.fft(data_segment)
+
+# Plot the original FFT profile for positive frequencies up to 2500 Hz
+plot_fft(fft_result, sample_rate)
+
+# Reverse-engineer the waveform
+reconstructed_waveform = reverse_engineer_waveform(fft_result)
+
+# Plot the original and reconstructed waveforms in the same plot
+plot_waveform_and_reconstructed(data_segment, reconstructed_waveform, sample_rate)
+
+# Export the reconstructed waveform to a WAV file
+output_wav_file = 'reconstructed_waveform_with_hamming.wav'
+wav.write(output_wav_file, sample_rate, reconstructed_waveform.astype(np.int16))
+print(f'Reconstructed waveform saved to {output_wav_file}')
 
